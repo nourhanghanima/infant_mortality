@@ -1,0 +1,229 @@
+---
+title: "Exploring Infant Mortality"
+author: "Nourhan Ghanima"
+date: "2023-11-27"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Answering Some Questions Related to Infant Mortality Rates Around the World 
+
+Infant mortality refers to the death of infants, typically those under the age of one year. It is a measure of the number of deaths that occur in infants within a given population or region. Infant mortality rate is commonly expressed as the number of deaths per 1,000 live births. It is an important health indicator, reflecting the overall health and well-being of a population, access to healthcare services, socio-economic conditions, and other factors. Reducing infant mortality is a goal of public health efforts worldwide.
+
+In this very brief project I hope to answer some questions about the global rates of infant deaths, namely: 
+
+* what factors affect infant mortality and in which direction.
+
+* are there differences in infant mortality at the continent level?
+
+* which regions have the highest infant mortality around the world. 
+
+
+I start by loading the data, sourced from UNICEF, and then by tidying up the data by ensuring:
+
+* that each variable has its own column
+
+* that each observation has its own row
+
+* that each value has its own cell
+
+
+```{r results='hide', message=FALSE, warning=FALSE}
+library(readr)
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+library(readxl)
+```
+
+
+```{r}
+mortality_data <- read_csv("/Users/nourhanghanima/downloads/T1.csv", skip = 1, 
+                           show_col_types = FALSE)
+```
+```{r}
+mortality_data <- mortality_data |>
+                  rename(Country = "Country Name") |>
+                  pivot_longer("1960":"2021", names_to = "year", 
+                               values_to = "mortality_rate")
+
+mortality_data$year <- as.numeric(mortality_data$year)
+
+summary(mortality_data)
+```
+
+
+I then create a new column for continent, in order to perform analysis at the continent level.
+```{r}
+mortality_data <- mortality_data |>
+  mutate(Continent = case_when(
+    Country %in% c("Algeria", "Angola",  "Benin", "Botswana", "Burkina Faso",
+                   "Burundi","Cabo Verde/Cape Verde","Cameroon", "Central African Republic",
+                   "Chad","Comoros", "Congo", "Democratic Republic of the Congo", "Djibouti",
+                   "Egypt", "Equatorial Guinea","Eritrea","Eswatini",
+                   "Ethiopia","Gabon","Gambia","Ghana", "Guinea", "Guinea-Bissau",
+                   "Ivory Coast", "Kenya", "Lesotho", "Liberia",
+                   "Libya", "Madagascar", "Malawi", "Mali", "Mauritania", "Mauritius",
+                   "Morocco", "Mozambique", "Namibia", "Niger", "Nigeria", "Rwanda", 
+                   "Brunei Darussalam", "Sao Tome and Principe","Senegal", "Seychelles", 
+                   "Sierra Leone", "Somalia", "South Africa", "South Sudan", "Sudan", 
+                   "Tanzania", "Togo", "Tunisia","Uganda", "Zambia", "Zimbabwe", 
+                   "Cote d'Ivoire", "Congo, Rep.",
+                   "Cabo Verde", "Egypt, Arab Rep.", "Gambia, The") ~ "Africa",
+   Country %in% c("Afghanistan", "Armenia", "Azerbaijan", "Bahrain", "Bangladesh", 
+                  "Bhutan", "Brunei", "Cambodia", "China", "East Timor", "Georgia", 
+                  "India", "Indonesia", "Iran", "Iraq", "Israel", "Japan", "Jordan", 
+                  "Kazakhstan", "Kuwait", "Kyrgygstan", "Laos", "Lebanon", "Malaysia", 
+                  "Maldives", "Mongolia", "Myanmar", "Nepal", "North Korea", "Oman", 
+                  "Pakistan","Palestine", "Philippines", "Qatar", "Russia", "Vietnam", 
+                  "Saudi Arabia", "Singapore","South Korea", "Sri Lanka", "Syria", 
+                  "Syrian Arab Republic", "Taiwan", "Tajikistan", "Thailand", "Turkey",
+                 "Turkiye","Turkmenistan", "United Arab Emirates", "Uzbekistan", "Yemen",  
+                 "Korea, Rep.") ~ "Asia",
+  Country %in% c("Albania", "Andorra", "Austria", "Belarus","Belgium", 
+                 "Bosnia and Herzegovina", "Bulgaria", "Croatia", "Cyprus",
+                 "Czech Republic","Denmark", "Estonia", "Finland", "France", 
+                 "Georgia", "Germany","Greece", "Hungary", "Iceland", "Ireland", 
+                 "Italy", "Kosovo", "Latvia", "Liechtenstein","Lithuania", 
+                 "Luxembourg", "North Macedonia", "Malta", "Moldova", "Monaco", 
+                 "Montenegro", "Netherlands", "Norway", "Poland", "Portugal", 
+                 "Romania", "Russia", "San Marino", "Serbia", "Slovakia", 
+                 "Slovenia", "Spain","Sweden", "Switzerland", "Turkey", "Ukraine", 
+                 "United Kingdom", "Vatican City") ~ "Europe",
+  Country %in% c("Antigua and Barbuda", "Bahamas", "Barbados", "Belize", "Canada", 
+                 "Costa Rica", "Cuba", "Dominica", "Dominican Republic", "El Salvador", 
+                 "Grenada", "Guatemala", "Haiti", "Honduras", "Jamaica", "Mexico", 
+                 "Nicaragua", "Panama", "Saint Kitts and Necis","Saint Lucia", 
+                 "Saint Vincent and the Grenadines", "Trinidad and Tobago", "United States", 
+                 "St. Lucia", "Turks and Caicos Islands", "St. Vincent and the Grenadines", 
+                 "British Virgin Islands") ~ "North America",
+  Country %in% c("Argentina", "Bolivia","Brazil", "Chile", "Colombia", "Ecuador", 
+                 "Guyana", "Paraguay", "Peru", "Suriname", "Trinidad and Tobago", 
+                 "Uruguay", "Venezuela", "Venezuela, RB" ) ~ "South America",
+  Country %in% c("Australia", "Fiji", "Kiribati", "Marshall Islands", 
+                 "Federated States of Micronesia", "Nauru", "New Zealand",
+                 "Palau",  "Papua New Guinea", "Samoa", "Solomon Islands", "Tonga",
+                 "Tuvalu", "Vanuatu", "Micronesia, Fed. Sts.") ~ "Oceania"))
+
+```
+
+
+
+
+## Plots
+
+The first plot in this report shows the mortality rate for each country across different years, color coded by each continent. It is obvious that while mortality rates are decreasing everywhere, infant mortality is still significantly higher in Africa than in other continents. 
+
+```{r ggplot, echo=FALSE}
+mortality_data |> 
+  ggplot( aes(x=year, y=mortality_rate, group=Country, color = Continent)) +
+  geom_line() + 
+  theme_bw()+
+  xlab("Years") +
+  ylab("Mortality Rate Per 1000 Live Births")
+  scale_x_continuous(breaks = seq(1960, 2020, 5), limits = c(1960, 2020)) 
+```
+
+
+The second plot shows the mortality rates for each continent in the years 1960 and 2020, which show the first year in the data and the last year in the data, respectively. 
+
+```{r ggplot1, fig.width=12,fig.height=6, echo = FALSE}
+mortality_data |> 
+  filter(year %in% c(1960, 2020)) |>
+  ggplot(aes(year, mortality_rate, col = Continent)) +
+  geom_point() +
+  theme_bw() +
+  xlab ("Years") +
+  ylab ("Mortality Rate/1000 Births")  +
+  xlim(1960, 2020) +
+  facet_grid(year~Continent)
+```
+
+The figures again show a marked decrease in infant mortality between 1960 and 2020, but the rates for Africa are still significantly higher than the other continents. 
+
+
+## Which country has the highest infant mortality for the year 2020?
+
+```{r , echo = FALSE}
+mortality_data |> 
+  filter(year == 2020) |>
+  filter(mortality_rate == max(mortality_rate)) |>
+  select(Country, year, mortality_rate, Continent)
+```
+## Which countries have the lowest infant mortality for the year 2020?
+```{r , echo = FALSE}
+  mortality_data |> 
+  filter(year == 2020) |>
+  filter(mortality_rate == min(mortality_rate)) |>
+  select(Country, year, mortality_rate, Continent)
+```
+
+## How is the progression of infant mortality different for the highest and lowest countries over the years?
+```{r gglpot2, echo = FALSE}
+mortality_data |>
+  filter(Country %in% c("Sierra Leone","Finland","Japan","Norway", "Singapore")) |>
+  ggplot(aes(x = year, y = mortality_rate, group = Country, color = Country)) +
+  geom_line() +
+  theme_bw()
+  
+```
+
+Infant mortality is decreasing everywhere along the years, but for Sierra Leone even the lowest infant mortality is higher than the highest infant mortality in Japan, Norway, Finland, or Singapore. 
+
+
+## Can we figure out why infant mortality in Sierra Leone is so high?
+
+Before looking at Sierra Leone specifically, I'd like to look into the factors that affect infant mortality and the directions of the relationships more generally. 
+
+To do this, I'll add data to the original mortality dataset that includes the rates of HIV prevalence, GDP, public health expenditure, and fertility rates.
+
+```{r, echo = FALSE, message=FALSE, results = FALSE, warning = FALSE}
+gdp_data <- read_csv("/Users/nourhanghanima/downloads/GDP Data World Bank/fc317218-35b2-4fa4-a763-e06db0661e80_Data.csv", show_col_types = FALSE)
+gdp_data <- gdp_data |>
+  pivot_longer("1990 [YR1990]": "2022 [YR2022]", names_to = "year", values_to = "GDP") |>
+  rename(Country = "Country Name")
+
+gdp_data$year <- as.numeric(substr(gdp_data$year, 0, 4))
+
+public_expenditure <- read_excel("/Users/nourhanghanima/downloads/imf-dm-export-20231122.xls")
+public_expenditure <- public_expenditure |>
+  mutate(across(2:223, as.numeric))
+
+public_expenditure <- public_expenditure |>
+  mutate(across(where(is.character), ~na_if(., "no data"))) |>
+  pivot_longer("1800": "2021", names_to = "year", values_to="public_spending") |>
+  rename(Country = "Government expenditure, percent of GDP (% of GDP)") 
+public_expenditure$year <- as.numeric(public_expenditure$year)
+
+fertility_rate <- read_csv("/Users/nourhanghanima/downloads/fertility_data.csv", show_col_types = FALSE)
+fertility_rate <- fertility_rate |>
+  pivot_longer("1960 [YR1960]": "2022 [YR2022]", names_to = "year", values_to = "fertility_rate") |>
+  rename(Country = "Country Name")
+fertility_rate$year  <- as.numeric(substr(fertility_rate$year, 0, 4))
+
+hiv_data <- read_csv("/Users/nourhanghanima/downloads/hiv_data.csv")
+hiv_data <- hiv_data |>
+  mutate(across(where(is.character), ~na_if(., ".."))) |>
+  pivot_longer("1960 [YR1960]": "2022 [YR2022]", names_to = "year", values_to = "hiv_rate") |>
+  rename(Country = "Country Name")
+hiv_data$year <- as.numeric(substr(hiv_data$year, 0, 4))
+
+list_df = list(mortality_data,hiv_data,public_expenditure, fertility_rate, gdp_data)
+df2 <- list_df %>% reduce(inner_join, by=c("Country", "year"))
+df2 <- df2 |>
+  select(Country, year, GDP, hiv_rate, fertility_rate, public_spending, mortality_rate) |>
+  drop_na()
+df2 <- df2 |>
+  mutate(across(3:7, as.numeric))
+
+```
+
+After combining the data, I run a simple regression model to check whether HIV rates, fertility rates, public spending, and GDP have any effects on infant mortality. 
+```{r}
+mortality_model <- lm(mortality_rate ~ hiv_rate + fertility_rate + GDP + public_spending, data= df2)
+summary(mortality_model)
+```
+We can see from the results that HIV rates have a highly statistically significant positive relationship with infant mortality. The same is true for fertility rates. Public spending, on the other hand, has a highly statistically significant effect on mortality rates. As public spending increases, infant mortality decreases. These results are expected. 
